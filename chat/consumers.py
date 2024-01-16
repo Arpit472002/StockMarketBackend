@@ -5,6 +5,32 @@ from channels.generic.websocket import WebsocketConsumer
 
 
 class ChatConsumer(WebsocketConsumer):
+    gameState = {
+        'companyValues': {
+            'companyId': {
+                'companyShareValue': 1000,
+                'stocksAvailable': 40
+            },
+        },
+        'userState': {
+            'userId': {
+                'userName': "arpit",
+                'cashInHand': 400000,
+                'cashInStocks': 8000000,
+                'holdings': {
+                    'companyId': 1400000,
+                },
+                'cardsHeld': ["card1", "card2"]
+            },
+        },
+        'currentMegaRound': 0,
+        'currentSubRound': 0,
+        'totalMegaRounds': 10,
+        'priceBook': {
+            'companyId': ["historyStockValues"]
+        }
+    }
+
     def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
