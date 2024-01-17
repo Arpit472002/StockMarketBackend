@@ -14,11 +14,17 @@ class Gamestate:
         self.noOfPlayers = noOfPlayers
         self.currentTurn = 1
         self.playerOrder=[]
+        self.circuitValues={}
+        self.transactions = []
 
         for i in Companies:
             self.companyValues[i.id]={"companyShareValue":i["startingPrice"],
                                       "stocksAvailable":200000}
             self.priceBook[i.id]=[i["startingPrice"]]
+            self.circuitValues[i["id"]] = {
+                "UP":None,
+                "LOW":None
+            }
 
         for i in range(noOfPlayers):
             self.playerOrder.append(i)
@@ -45,6 +51,13 @@ class Gamestate:
                 winnerId = playerId
         return winnerId
     
+    def nextTurn(self):
+        self.currentTurn=(self.currentTurn+1)%self.noOfPlayers
+        if self.currentTurn==0:
+            self.currentSubRound+=1
+        if self.currentSubRound==5:
+            self.endMegaRound()
+
     def distributeCardsTo(self):
         shuffledCards = getShuffledCards()
         for i in range(self.noOfPlayers):
@@ -70,6 +83,17 @@ class Gamestate:
         self.userState[userId]["cashInHand"]-=transactionAmount
         self.userState[userId]["cashInStocks"]+=transactionAmount
         self.companyValues[companyId]["stocksAvailable"]-=numberOfStocks
+        self.transactions.append({
+            "userId":userId,
+            "type":"BUY",
+            "companyId": companyId,
+            "numberOfStocks": numberOfStocks,
+            "stockPrice": self.companyValues[companyId]["companyShareValue"],
+            "circuitValue": 0
+
+        })
+        self.nextTurn()
+        
 
     def sell(self,userId,companyId,numberOfStocks):
         if userId!=self.currentTurn:
@@ -79,9 +103,32 @@ class Gamestate:
         self.userState[userId]["cashInHand"]+=transactionAmount
         self.userState[userId]["cashInStocks"]-=transactionAmount
         self.companyValues[companyId]["stocksAvailable"]+=numberOfStocks
+        self.transactions.append({
+            "userId":userId,
+            "type":"SELL",
+            "companyId": companyId,
+            "numberOfStocks": numberOfStocks,
+            "stockPrice": self.companyValues[companyId]["companyShareValue"],
+            "circuitValue": 0
 
-    def circuit(self,userId,companyId, circuitType, denomination):
-        pass
+        })
+        self.nextTurn()
+
+
+    def circuit(self,companyId, circuitType, denomination):
+        self.circuitValues[companyId][circuitType]=denomination
+        self.transactions.append({
+            "userId":self.playerOrder[self.currentTurn],
+            "type":"CIRCUIT:"+circuitType,
+            "companyId": companyId,
+            "numberOfStocks": 0,
+            "stockPrice": 0,
+            "circuitValue": denomination
+
+        })
+        self.nextTurn()
+
+
 
     
 
