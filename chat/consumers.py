@@ -47,22 +47,33 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_name, self.channel_name
         )
-        
+        userDict[self.room_name].remove(self.username)
+    
 
-    # Message sent by Client is received by Host and sent to other clients
+    # Called when message is received from frontend
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
+        if text_data_json["type"]=="DisconnectionRequest":
+            self.disconnect()
+        elif text_data_json["type"]=="StartGameRequest":
+            if userDict[self.room_name][0]==self.username:
+                async_to_sync(self.channel_layer.group_send)(
+                self.room_name, {"type": "start_game", "message": message,"roomMembers":userDict[self.room_name]}
+                )
+                return
+            else:
+                raise Exception("User not authorized to start the game")
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_name, {"type": "chat_message", "message": message}
         )
 
-    # Message sent by Host is received by Client
+    def start_game(self,event):
+        self.send(text_data=json.dumps(event))
+
+    # Called when group_send is called or message is sent to frontend
     def chat_message(self, event):
         message = event["message"]
-        print(event)
         # Send message to WebSocket
-        if event["type"]=="DisconnectionRequest":
-            self.disconnect()
         self.send(text_data=json.dumps({"message": message}))
