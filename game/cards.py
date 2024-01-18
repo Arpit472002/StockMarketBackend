@@ -1,4 +1,4 @@
-from companies import Companies 
+from .companies import Companies 
 import random
 
 def getCardStack():

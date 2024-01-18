@@ -1,5 +1,5 @@
-from companies import Companies
-from cards import getShuffledCards
+from .companies import Companies
+from .cards import getShuffledCards
 import random
 import math
 import pprint
