@@ -3,6 +3,7 @@ from .cards import getShuffledCards
 import random
 import math
 import pprint
+import json
 
 class Gamestate:
     def __init__(self,playersName, totalMegaRounds = 10):
@@ -295,6 +296,9 @@ class Gamestate:
             self.circuitValues,
             self.transactions)
         )
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=False, indent=4)
     
 # obj = Gamestate(["bhavik","arun","arpit"],1)
 

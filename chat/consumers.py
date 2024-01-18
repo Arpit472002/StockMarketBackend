@@ -2,7 +2,7 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from game.gamestate import Gamestate
-# from channels_presence.models import Room
+
 userDict={}
 gameDict={}
 class ChatConsumer(WebsocketConsumer):
@@ -63,6 +63,7 @@ class ChatConsumer(WebsocketConsumer):
         message = text_data_json["data"]
         if text_data_json["type"]=="onStartGame":
             if userDict[self.room_name][0]==self.username:
+                print("Here")
                 async_to_sync(self.channel_layer.group_send)(
                 self.room_name, {"type": "onStartGame", "data":{"userArr":userDict[self.room_name],"totalMegaRounds":message["totalMegaRounds"]}}
                 )
@@ -75,9 +76,12 @@ class ChatConsumer(WebsocketConsumer):
         )
 
     def onStartGame(self,event):
-        print("Here")
-        event["gameState"]=Gamestate(event["data"]["userArr"][self.room_name],event["data"]["totalMegaRounds"])
-        self.send(text_data=json.dumps(event))
+        response={"type":"onStartGame"}
+        gameState=Gamestate(event["data"]["userArr"],event["data"]["totalMegaRounds"])
+        event=gameState.toJSON()
+        event=json.loads(event)
+        response["data"]=event
+        self.send(text_data=json.dumps(response))
 
     # Called when group_send is called or message is sent to frontend
     def getRoomDetails(self, event):
