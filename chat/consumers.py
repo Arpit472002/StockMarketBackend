@@ -49,7 +49,7 @@ class ChatConsumer(WebsocketConsumer):
         print(self.username)
         userDict[self.room_name].remove(self.username)
         async_to_sync(self.channel_layer.group_send)(
-        self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","RoomMembers":userDict[self.room_name]}}
+        self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
         )
         async_to_sync(self.channel_layer.group_discard)(
             self.room_name, self.channel_name
@@ -75,7 +75,7 @@ class ChatConsumer(WebsocketConsumer):
         )
 
     def onStartGame(self,event):
-        print(event)
+        print("Here")
         event["gameState"]=Gamestate(event["data"]["userArr"][self.room_name],event["data"]["totalMegaRounds"])
         self.send(text_data=json.dumps(event))
 
