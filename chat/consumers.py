@@ -72,13 +72,19 @@ class ChatConsumer(WebsocketConsumer):
         elif text_data_json["type"]=="buy":
             gameDict[self.room_name].buy(text_data_json["data"]["userId"],text_data_json["data"]["companyId"],text_data_json["data"]["numberOfStocks"])
             async_to_sync(self.channel_layer.group_send)(
-                self.room_name,{"type":"buy","data":gameDict[self.room_name]}
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
             )
             return
+        elif text_data_json["type"]=="sell":
+            gameDict[self.room_name].sell(text_data_json["data"]["userId"],text_data_json["data"]["companyId"],text_data_json["data"]["numberOfStocks"])
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
+            )
+            return        
         elif text_data_json["type"]=="pass":
             gameDict[self.room_name].passTransaction(text_data_json["data"]["userId"])
             async_to_sync(self.channel_layer.group_send)(
-                self.room_name,{"type":"pass_transaction","data":gameDict[self.room_name]}
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
             )
             return
         # Send message to room group
@@ -96,20 +102,14 @@ class ChatConsumer(WebsocketConsumer):
         response["data"]=event
         self.send(text_data=json.dumps(response))
 
-    def buy(self,event):
+    def transaction(self,event):
         response={"type":"roundInfo"}
         event=event["data"].toJSON()
         event=json.loads(event)
         response["data"]=event
         self.send(text_data=json.dumps(response))
 
-
-    def pass_transaction(self,event):
-        response={"type":"roundInfo"}
-        event=event["data"].toJSON()
-        event=json.loads(event)
-        response["data"]=event
-        self.send(text_data=json.dumps(response))
+        
     # Called when group_send is called or message is sent to frontend
     def getRoomDetails(self, event):
         # Send message to WebSocket
