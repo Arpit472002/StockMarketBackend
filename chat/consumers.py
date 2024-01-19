@@ -63,13 +63,21 @@ class ChatConsumer(WebsocketConsumer):
         message = text_data_json["data"]
         if text_data_json["type"]=="onStartGame":
             if userDict[self.room_name][0]==self.username:
-                print("Here")
                 async_to_sync(self.channel_layer.group_send)(
                 self.room_name, {"type": "onStartGame", "data":{"userArr":userDict[self.room_name],"totalMegaRounds":message["totalMegaRounds"]}}
                 )
                 return
             else:
                 raise Exception("User not authorized to start the game")
+        elif text_data_json["type"]=="buy":
+            # print(gameDict[self.room_name].userState[text_data_json["data"]["userId"]]["cashInStocks"])
+            gameDict[self.room_name].buy(text_data_json["data"]["userId"],text_data_json["data"]["companyId"],text_data_json["data"]["numberOfStocks"])
+            # print(gameDict[self.room_name].userState[text_data_json["data"]["userId"]]["cashInStocks"])
+            print(gameDict[self.room_name])
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"buy","data":gameDict[self.room_name]}
+            )
+            return
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_name, {"type":"getRoomDetails","data":message}
@@ -78,11 +86,21 @@ class ChatConsumer(WebsocketConsumer):
     def onStartGame(self,event):
         response={"type":"onStartGame"}
         gameState=Gamestate(event["data"]["userArr"],event["data"]["totalMegaRounds"])
+        gameState.startMegaRound()
+        gameDict[self.room_name]=gameState
         event=gameState.toJSON()
         event=json.loads(event)
         response["data"]=event
         self.send(text_data=json.dumps(response))
 
+    def buy(self,event):
+        response={"type":"roundInfo"}
+        print(event["data"].toJSON())
+        event=event["data"].toJSON()
+        event=json.loads(response)
+        response["data"]=event
+        print(response)
+        self.send(text_data=json.dumps(response))
     # Called when group_send is called or message is sent to frontend
     def getRoomDetails(self, event):
         # Send message to WebSocket
