@@ -46,7 +46,6 @@ class ChatConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code=1000):
         # Leave room group
-        print(self.username)
         userDict[self.room_name].remove(self.username)
         async_to_sync(self.channel_layer.group_send)(
         self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
@@ -54,7 +53,6 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_name, self.channel_name
         )
-        print("User removed from list")
     
 
     # Called when message is received from frontend
