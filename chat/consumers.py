@@ -66,7 +66,6 @@ class ChatConsumer(WebsocketConsumer):
                 async_to_sync(self.channel_layer.group_send)(
                 self.room_name, {"type": "onStartGame", "data":{"userArr":userDict[self.room_name],"totalMegaRounds":message["totalMegaRounds"]}}
                 )
-                return
             else:
                 raise Exception("User not authorized to start the game")
         elif text_data_json["type"]=="buy":
@@ -74,23 +73,36 @@ class ChatConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
             )
-            return
         elif text_data_json["type"]=="sell":
             gameDict[self.room_name].sell(text_data_json["data"]["userId"],text_data_json["data"]["companyId"],text_data_json["data"]["numberOfStocks"])
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
-            )
-            return        
+            )        
         elif text_data_json["type"]=="pass":
             gameDict[self.room_name].passTransaction(text_data_json["data"]["userId"])
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
             )
-            return
-        # Send message to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_name, {"type":"getRoomDetails","data":message}
-        )
+        elif text_data_json["type"]=="crystal":
+            gameDict[self.room_name].crystal(text_data_json["data"]["userId"],text_data_json["data"]["crystalType"],text_data_json["data"]["companyId"],text_data_json["data"]["numberOfStocks"])
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
+            )
+        elif text_data_json["type"]=="circuit":
+            gameDict[self.room_name].circuit(text_data_json["data"]["companyId"],text_data_json["data"]["circuitType"],text_data_json["data"]["denomination"])
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
+            )
+        elif text_data_json["type"]=="startMegaRound":
+            gameDict[self.room_name].startMegaRound()
+            gameDict[self.room_name].netChangeInCompanyByUsers={}
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
+            )
+        elif text_data_json["type"]=="getRoomDetails":
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name, {"type":"getRoomDetails","data":message}
+            )
 
     def onStartGame(self,event):
         response={"type":"onStartGame"}
@@ -109,7 +121,7 @@ class ChatConsumer(WebsocketConsumer):
         response["data"]=event
         self.send(text_data=json.dumps(response))
 
-        
+
     # Called when group_send is called or message is sent to frontend
     def getRoomDetails(self, event):
         # Send message to WebSocket
