@@ -62,6 +62,9 @@ class ChatConsumer(WebsocketConsumer):
         type=text_data_json["type"]
         if type=="onStartGame":
             if userDict[self.room_name][0]==self.username:
+                gameState=Gamestate(userDict[self.room_name],message["totalMegaRounds"])
+                gameState.startMegaRound()
+                gameDict[self.room_name]=gameState
                 async_to_sync(self.channel_layer.group_send)(
                 self.room_name, {"type": "onStartGame", "data":{"userArr":userDict[self.room_name],"totalMegaRounds":message["totalMegaRounds"]}}
                 )
@@ -105,9 +108,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def onStartGame(self,event):
         response={"type":"onStartGame"}
-        gameState=Gamestate(event["data"]["userArr"],event["data"]["totalMegaRounds"])
-        gameState.startMegaRound()
-        gameDict[self.room_name]=gameState
+        gameState=gameDict[self.room_name]
         event=gameState.toJSON()
         event=json.loads(event)
         response["data"]=event

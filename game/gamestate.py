@@ -69,6 +69,7 @@ class Gamestate:
             shuffledCards= shuffledCards[10:]
     
     def startMegaRound(self):
+        print("Hello")
         random.shuffle(self.playerOrder)
         self.distributeCardsTo()
         self.currentMegaRound+=1
