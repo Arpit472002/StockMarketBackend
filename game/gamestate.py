@@ -20,6 +20,7 @@ class Gamestate:
         self.circuitValues={}
         self.transactions = []
         self.netChangeInCompanyByUsers={}
+        self.adminId=0
 
         for i in Companies:
             self.companyValues[i["id"]]={"companyShareValue":i["startingPrice"],
@@ -44,16 +45,18 @@ class Gamestate:
                 self.userState[i]["holdings"][j["id"]] = 0
     
     def findWinner(self):
-        highestValue = 0
-        winnerId = None
+        winnerDict={}
+        response=[]
         for playerId in range(self.noOfPlayers):
-            totalWorth = self.userState[playerId]['cashInHand']
-            for company in Companies:
-                totalWorth += self.companyValues[company['id']]["companyShareValue"] * self.userState[playerId]['holdings'][company['id']]
-            if totalWorth > highestValue:
-                highestValue = totalWorth
-                winnerId = playerId
-        return winnerId
+            totalWorth = self.userState[playerId]['cashInHand']+self.userState[playerId]['cashInStocks']
+            winnerDict[playerId]=totalWorth
+        sorted_winnerDict = dict(sorted(winnerDict.items(), key=lambda x:x[1], reverse=True))
+        for i in sorted_winnerDict:
+            response.append({"id":i,
+                            "username":self.userState[i]['username'],
+                            "cashInHand":self.userState[i]['cashInHand'],
+                            "cashInStocks":self.userState[i]['cashInStocks']})
+        return response
     
     def nextTurn(self):
         self.currentTurn=(self.currentTurn+1)%self.noOfPlayers
@@ -69,7 +72,6 @@ class Gamestate:
             shuffledCards= shuffledCards[10:]
     
     def startMegaRound(self):
-        print("Hello")
         random.shuffle(self.playerOrder)
         self.distributeCardsTo()
         self.currentMegaRound+=1

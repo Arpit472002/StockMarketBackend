@@ -105,6 +105,16 @@ class ChatConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name, {"type":"getRoomDetails","data":message}
             )
+        elif type=="endMegaRound":
+            netChange=gameDict[self.room_name].netChangeInCompanyByUsers
+            priceBook=gameDict[self.room_name].priceBook
+            response={"type":"endMegaRound","data":{"netChange":netChange,"priceBook":priceBook}}
+            self.send(json.dumps(response))
+        elif type=="endGame":
+            response=gameDict[self.room_name].endGame()
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"endGame","data":{"results":response}}
+            )
 
     def onStartGame(self,event):
         response={"type":"onStartGame"}
@@ -121,7 +131,8 @@ class ChatConsumer(WebsocketConsumer):
         response["data"]=event
         self.send(text_data=json.dumps(response))
 
-
+    def endGame(self,event):
+        self.send(text_data=json.dumps(event))
     # Called when group_send is called or message is sent to frontend
     def getRoomDetails(self, event):
         # Send message to WebSocket
