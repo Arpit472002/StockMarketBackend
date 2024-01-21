@@ -46,6 +46,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code=1000):
         # Leave room group
+        gameDict[self.room_name].checkIsAdmin(userDict[self.room_name].index(self.username))
         userDict[self.room_name].remove(self.username)
         async_to_sync(self.channel_layer.group_send)(
         self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}

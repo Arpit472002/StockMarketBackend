@@ -302,7 +302,9 @@ class Gamestate:
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
-    
+    def checkIsAdmin(self,leftPlayerIndex):
+        if leftPlayerIndex==0:
+            self.adminId+=1
 # obj = Gamestate(["bhavik","arun","arpit"],1)
 
 # obj.startMegaRound()
