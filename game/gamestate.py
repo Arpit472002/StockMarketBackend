@@ -123,7 +123,10 @@ class Gamestate:
         
         # priceBook updation and comapnyShareValue updation
         for i in Companies:
-            self.priceBook[i["id"]].append(self.companyValues[i["id"]]["companyShareValue"] + totalChangeInCompany[i["id"]-1])
+            newPrice=self.companyValues[i["id"]]["companyShareValue"] + totalChangeInCompany[i["id"]-1]
+            if newPrice<0:
+                newPrice=0
+            self.priceBook[i["id"]].append(newPrice)
             self.companyValues[i["id"]]["companyShareValue"] = self.priceBook[i["id"]][-1]
 
 
