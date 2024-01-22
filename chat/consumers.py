@@ -116,6 +116,7 @@ class ChatConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name,{"type":"endGame","data":{"results":response}}
             )
+            gameDict.pop(self.room_name)
 
     def onStartGame(self,event):
         response={"type":"onStartGame"}

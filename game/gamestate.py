@@ -137,11 +137,22 @@ class Gamestate:
         self.userState[userId]["cashInStocks"] = newCashInStock
             
 
+    def buy_check(self,userId,companyId,numberOfStocks,companyShareValue):
+        availableStocks=self.companyValues[companyId]["stocksAvailable"]
+        if availableStocks<numberOfStocks:
+            numberOfStocks=availableStocks
+        transactionAmount=numberOfStocks*companyShareValue
+        cashInHand=self.userState[userId]["cashInHand"]
+        if transactionAmount>cashInHand:
+            numberOfStocks=math.floor(cashInHand/(companyShareValue*1000))*1000
+        return numberOfStocks
 
     def buy(self,userId,companyId,numberOfStocks):
         if userId!=self.playerOrder[self.currentTurn]:
             return
-        transactionAmount = numberOfStocks*self.companyValues[companyId]["companyShareValue"]
+        companyShareValue=self.companyValues[companyId]["companyShareValue"]
+        numberOfStocks=self.buy_check(userId,companyId,numberOfStocks,companyShareValue)
+        transactionAmount = numberOfStocks*companyShareValue
         self.userState[userId]["holdings"][companyId]+=numberOfStocks
         self.userState[userId]["cashInHand"]-=transactionAmount
         self.userState[userId]["cashInStocks"]+=transactionAmount
@@ -156,11 +167,17 @@ class Gamestate:
 
         })
         self.nextTurn()
-        
+    
+    def sell_check(self,userId,companyId,numberOfStocks):
+        stocks_held=self.userState[userId]["holdings"][companyId]
+        if numberOfStocks>stocks_held:
+            numberOfStocks=stocks_held
+        return numberOfStocks
 
     def sell(self,userId,companyId,numberOfStocks):
         if userId!=self.playerOrder[self.currentTurn]:
             return
+        numberOfStocks=self.sell_check(userId,companyId,numberOfStocks)
         transactionAmount = numberOfStocks*self.companyValues[companyId]["companyShareValue"]
         self.userState[userId]["holdings"][companyId]-=numberOfStocks
         self.userState[userId]["cashInHand"]+=transactionAmount
@@ -211,6 +228,7 @@ class Gamestate:
     def crystal(self,userId, crystalType,companyId=1,numberOfStocks=0):
         if crystalType=="FRAUD":
             newStockValue = math.floor(int(0.7 * self.companyValues[companyId]["companyShareValue"])/5)*5
+            numberOfStocks=self.buy_check(userId,companyId,numberOfStocks,newStockValue)
             transactionAmount = numberOfStocks*newStockValue
             self.userState[userId]["holdings"][companyId]+=numberOfStocks
             self.userState[userId]["cashInHand"]-=transactionAmount
@@ -241,6 +259,8 @@ class Gamestate:
 
         elif crystalType=="BONUS_SHARE":
             numberOfHoldings = math.floor(self.userState[userId]["holdings"][companyId] /5000) *1000
+            if numberOfHoldings>self.companyValues[companyId]["stocksAvailable"]:
+                numberOfHoldings=self.companyValues[companyId]["stocksAvailable"]
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
 
@@ -258,7 +278,9 @@ class Gamestate:
         elif crystalType=="RIGHT_ISSUE":
 
             numberOfHoldings = math.floor(self.userState[userId]["holdings"][companyId] /2000) *1000
-            transactionAmount = numberOfHoldings*10
+            companyShareValue=10
+            numberOfHoldings=self.buy_check(userId,companyId,numberOfHoldings,companyShareValue)
+            transactionAmount = numberOfHoldings*companyShareValue
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
             self.userState[userId]["cashInHand"]-=transactionAmount
@@ -285,6 +307,12 @@ class Gamestate:
                 "stockPrice": 0,
                 "circuitValue": 0
             })
+        cardToBeRemoved=self.transactions[0]["type"][8:]
+        for i in self.userState[userId]["cardsHeld"]:
+            if i["type"]=="CRYSTAL":
+                if i["crystalType"]==cardToBeRemoved:
+                    self.userState[userId]["cardsHeld"].remove(i)
+                    break
         self.nextTurn()
     
     def printDetails(self):
