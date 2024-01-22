@@ -82,10 +82,11 @@ class ChatConsumer(WebsocketConsumer):
                 self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
             )        
         elif type=="pass":
-            gameDict[self.room_name].passTransaction(message["userId"])
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
-            )
+            if gameDict[self.room_name].playerOrder[gameDict[self.room_name].currentTurn]==message["userId"]:
+                gameDict[self.room_name].passTransaction(message["userId"])
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_name,{"type":"transaction","data":gameDict[self.room_name]}
+                )
         elif type=="crystal":
             gameDict[self.room_name].crystal(message["userId"],message["crystalType"],message["companyId"],message["numberOfStocks"])
             async_to_sync(self.channel_layer.group_send)(

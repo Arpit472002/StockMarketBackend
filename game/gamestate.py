@@ -139,11 +139,11 @@ class Gamestate:
 
     def buy_check(self,userId,companyId,numberOfStocks,companyShareValue):
         availableStocks=self.companyValues[companyId]["stocksAvailable"]
-        if availableStocks<numberOfStocks:
+        if availableStocks<=numberOfStocks:
             numberOfStocks=availableStocks
         transactionAmount=numberOfStocks*companyShareValue
         cashInHand=self.userState[userId]["cashInHand"]
-        if transactionAmount>cashInHand:
+        if transactionAmount>=cashInHand:
             numberOfStocks=math.floor(cashInHand/(companyShareValue*1000))*1000
         return numberOfStocks
 
@@ -170,7 +170,7 @@ class Gamestate:
     
     def sell_check(self,userId,companyId,numberOfStocks):
         stocks_held=self.userState[userId]["holdings"][companyId]
-        if numberOfStocks>stocks_held:
+        if numberOfStocks>=stocks_held:
             numberOfStocks=stocks_held
         return numberOfStocks
 
@@ -259,7 +259,7 @@ class Gamestate:
 
         elif crystalType=="BONUS_SHARE":
             numberOfHoldings = math.floor(self.userState[userId]["holdings"][companyId] /5000) *1000
-            if numberOfHoldings>self.companyValues[companyId]["stocksAvailable"]:
+            if numberOfHoldings>=self.companyValues[companyId]["stocksAvailable"]:
                 numberOfHoldings=self.companyValues[companyId]["stocksAvailable"]
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
