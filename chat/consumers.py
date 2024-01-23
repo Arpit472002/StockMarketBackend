@@ -21,6 +21,8 @@ class ChatConsumer(WebsocketConsumer):
         self.join = self.stringToBool(self.join[5:])
         self.username = self.username[9:]
         if self.create:
+            if self.room_name in userDict:
+                raise Exception("Room with this name is already created try joining it!")
             userList=[]
             userList.append(self.username)
             userDict[self.room_name]=userList
