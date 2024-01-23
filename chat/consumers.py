@@ -2,9 +2,20 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from game.gamestate import Gamestate
+from django.http import HttpResponse
 
 userDict={}
 gameDict={}
+
+class UserAlreadyExistsError(Exception):
+    pass
+
+class RoomNotFoundError(Exception):
+    pass
+
+class RoomLimitExceededError(Exception):
+    pass
+
 class ChatConsumer(WebsocketConsumer):
     
     def stringToBool(self,string):
@@ -22,19 +33,22 @@ class ChatConsumer(WebsocketConsumer):
         self.username = self.username[9:]
         if self.create:
             if self.room_name in userDict:
-                raise Exception("Room with this name is already created try joining it!")
+                raise Exception("Room with this name is already created...Try joining it!")
             userList=[]
             userList.append(self.username)
             userDict[self.room_name]=userList
         else:
-            try:
+            if self.room_name in userDict:
                 userList=userDict[self.room_name]
+                if self.username in userList:
+                    raise UserAlreadyExistsError("User already exists")
                 userList.append(self.username)
                 if len(userList)>7:
-                    raise Exception("Room limit exceeded")
+                    raise RoomLimitExceededError("Room limit exceeded")
                 userDict[self.room_name]=userList
-            except:
-                raise Exception("Room trying to join does not exist")
+            else:
+                raise RoomNotFoundError("Room not found")
+                
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_name, self.channel_name
