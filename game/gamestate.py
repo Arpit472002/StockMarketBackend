@@ -145,6 +145,8 @@ class Gamestate:
         cashInHand=self.userState[userId]["cashInHand"]
         if transactionAmount>=cashInHand:
             numberOfStocks=math.floor(cashInHand/(companyShareValue*1000))*1000
+        if companyShareValue==0:
+            numberOfStocks=0
         return numberOfStocks
 
     def buy(self,userId,companyId,numberOfStocks):
@@ -168,17 +170,20 @@ class Gamestate:
         })
         self.nextTurn()
     
-    def sell_check(self,userId,companyId,numberOfStocks):
+    def sell_check(self,userId,companyId,numberOfStocks,companyShareValue):
         stocks_held=self.userState[userId]["holdings"][companyId]
         if numberOfStocks>=stocks_held:
             numberOfStocks=stocks_held
+        if companyShareValue==0:
+            numberOfStocks=0
         return numberOfStocks
 
     def sell(self,userId,companyId,numberOfStocks):
         if userId!=self.playerOrder[self.currentTurn]:
             return
-        numberOfStocks=self.sell_check(userId,companyId,numberOfStocks)
-        transactionAmount = numberOfStocks*self.companyValues[companyId]["companyShareValue"]
+        companyShareValue=self.companyValues[companyId]["companyShareValue"]
+        numberOfStocks=self.sell_check(userId,companyId,numberOfStocks,companyShareValue)
+        transactionAmount = numberOfStocks*companyShareValue
         self.userState[userId]["holdings"][companyId]-=numberOfStocks
         self.userState[userId]["cashInHand"]+=transactionAmount
         self.userState[userId]["cashInStocks"]-=transactionAmount
@@ -227,7 +232,8 @@ class Gamestate:
 
     def crystal(self,userId, crystalType,companyId=1,numberOfStocks=0):
         if crystalType=="FRAUD":
-            newStockValue = math.floor(int(0.7 * self.companyValues[companyId]["companyShareValue"])/5)*5
+            companyShareValue=self.companyValues[companyId]["companyShareValue"]
+            newStockValue = math.floor(int(0.7 * companyShareValue)/5)*5
             numberOfStocks=self.buy_check(userId,companyId,numberOfStocks,newStockValue)
             transactionAmount = numberOfStocks*newStockValue
             self.userState[userId]["holdings"][companyId]+=numberOfStocks
@@ -259,8 +265,11 @@ class Gamestate:
 
         elif crystalType=="BONUS_SHARE":
             numberOfHoldings = math.floor(self.userState[userId]["holdings"][companyId] /5000) *1000
+            companyShareValue = self.companyValues[companyId]["companyShareValue"]
             if numberOfHoldings>=self.companyValues[companyId]["stocksAvailable"]:
                 numberOfHoldings=self.companyValues[companyId]["stocksAvailable"]
+            if companyShareValue==0:
+                numberOfHoldings=0
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
 
@@ -278,7 +287,9 @@ class Gamestate:
         elif crystalType=="RIGHT_ISSUE":
 
             numberOfHoldings = math.floor(self.userState[userId]["holdings"][companyId] /2000) *1000
-            companyShareValue=10
+            companyShareValue=self.companyValues[companyId]["companyShareValue"]
+            if companyShareValue!=0:
+                companyShareValue=10
             numberOfHoldings=self.buy_check(userId,companyId,numberOfHoldings,companyShareValue)
             transactionAmount = numberOfHoldings*companyShareValue
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
