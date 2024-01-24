@@ -270,8 +270,10 @@ class Gamestate:
                 numberOfHoldings=self.companyValues[companyId]["stocksAvailable"]
             if companyShareValue==0:
                 numberOfHoldings=0
+            transactionAmount=numberOfHoldings*companyShareValue
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
+            self.userState[userId]["cashInStocks"]+=transactionAmount
 
             self.appendTransaction({
                 "userId":userId,
