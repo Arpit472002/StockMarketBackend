@@ -16,6 +16,9 @@ class RoomNotFoundError(Exception):
 class RoomLimitExceededError(Exception):
     pass
 
+class GameAlreadyStartedError(Exception):
+    pass
+
 class ChatConsumer(WebsocketConsumer):
     
     def stringToBool(self,string):
@@ -42,7 +45,17 @@ class ChatConsumer(WebsocketConsumer):
                 userList=userDict[self.room_name]
                 if self.username in userList:
                     raise UserAlreadyExistsError("User already exists")
-                userList.append(self.username)
+                if self.room_name in gameDict:
+                    flag=0
+                    for i in gameDict[self.room_name].userState:
+                        if gameDict[self.room_name].userState[i]["username"]==self.username:
+                            print(gameDict[self.room_name].userState[i]["username"])
+                            userList.insert(i,self.username)
+                            flag=1
+                    if flag==0:
+                        raise GameAlreadyStartedError("Game Already Started")
+                else:
+                    userList.append(self.username)
                 if len(userList)>7:
                     raise RoomLimitExceededError("Room limit exceeded")
                 userDict[self.room_name]=userList
@@ -62,16 +75,16 @@ class ChatConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code=1000):
         # Leave room group
-        if self.room_name in gameDict:
-            gameDict[self.room_name].checkIsAdmin(userDict[self.room_name].index(self.username))
-        userDict[self.room_name].remove(self.username)
-        async_to_sync(self.channel_layer.group_send)(
-        self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
-        )
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_name, self.channel_name
-        )
-    
+        if self.username in userDict[self.room_name]:
+            if self.room_name in gameDict:
+                gameDict[self.room_name].checkIsAdmin(userDict[self.room_name].index(self.username))
+            userDict[self.room_name].remove(self.username)
+            async_to_sync(self.channel_layer.group_send)(
+            self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
+            )
+            async_to_sync(self.channel_layer.group_discard)(
+                self.room_name, self.channel_name
+            )
 
     # Called when message is received from frontend
     def receive(self, text_data):
