@@ -38,7 +38,7 @@ class Gamestate:
             self.userState[i] = {
                 "id":i,
                 "username":playersName[i],
-                "cashInHand": 8000000,
+                "cashInHand": 800000,
                 "cashInStocks":0,
                 "holdings": {},
                 "cardsHeld": [],
