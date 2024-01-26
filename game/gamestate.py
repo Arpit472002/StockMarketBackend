@@ -1,5 +1,5 @@
 from .companies import Companies
-from .cards import getShuffledCards,getCardStack
+from .cards import getShuffledCards
 import random
 import math
 import pprint
@@ -21,8 +21,10 @@ class Gamestate:
         self.transactions = []
         self.netChangeInCompanyByUsers={}
         self.adminId=0
+        self.chairman={}
 
         for i in Companies:
+            self.chairman[i["id"]]=None
             self.companyValues[i["id"]]={"companyShareValue":i["startingPrice"],
                                       "stocksAvailable":200000}
             self.priceBook[i["id"]]=[i["startingPrice"]]
@@ -36,7 +38,7 @@ class Gamestate:
             self.userState[i] = {
                 "id":i,
                 "username":playersName[i],
-                "cashInHand": 800000,
+                "cashInHand": 8000000,
                 "cashInStocks":0,
                 "holdings": {},
                 "cardsHeld": [],
@@ -96,7 +98,23 @@ class Gamestate:
 
     def endGame(self):
         return self.findWinner()        
-                
+
+    def applyChairman(self):
+        for company in Companies:
+            playerIndex = -1
+            cardIndex = -1
+            val = 0
+            if self.chairman[company["id"]]!=None:
+                for i in range(self.noOfPlayers):
+                    for index,card in enumerate(self.userState[i]["cardsHeld"]):
+                        if card["type"] == "NORMAL" and card["companyId"]==company["id"] and card["netChange"] < val:
+                            playerIndex=i
+                            cardIndex = index
+                            val =  card["netChange"]
+            if playerIndex!=-1:
+                self.userState[playerIndex]["cardsHeld"].pop(cardIndex)
+
+
     def calculateNewStockPrice(self):
         # CompanyId -> [netChange] |  netChange by a user in a company is being calculated 
         self.netChangeInCompanyByUsers = {} 
@@ -104,6 +122,7 @@ class Gamestate:
         for i in Companies:
             self.netChangeInCompanyByUsers[i["id"]]=[0 for _ in range(self.noOfPlayers)]
 
+        # self.applyChairman()
         for i in range(self.noOfPlayers):
             for card in self.userState[i]["cardsHeld"]:
                 if card["type"] == "NORMAL":
@@ -227,8 +246,21 @@ class Gamestate:
         self.nextTurn()
 
     def appendTransaction(self,transaction):
+        # Chairman Change Logic
+        if transaction["type"]=="SELL":
+            if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
+                self.chairman[transaction["companyId"]] = None
+                for idx in range(self.noOfPlayers):
+                    if self.userState[idx]["holdings"][transaction["companyId"]]>=100000:
+                        self.chairman[transaction["companyId"]] = idx
+
+        elif transaction["companyId"]>0:
+            if self.chairman[transaction["companyId"]]==None and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=100000:
+                self.chairman[transaction["companyId"]] = transaction["userId"]
+        
+        # Transaction Logic
         self.transactions.insert(0,transaction)
-        if len(self.transactions) > 40:
+        if len(self.transactions) > 35:
             self.transactions.pop()
 
     def crystal(self,userId, crystalType,companyId=1,numberOfStocks=0):
@@ -239,7 +271,7 @@ class Gamestate:
             transactionAmount = numberOfStocks*newStockValue
             self.userState[userId]["holdings"][companyId]+=numberOfStocks
             self.userState[userId]["cashInHand"]-=transactionAmount
-            self.userState[userId]["cashInStocks"]+=transactionAmount
+            self.userState[userId]["cashInStocks"]+= companyShareValue * numberOfStocks
             self.companyValues[companyId]["stocksAvailable"]-=numberOfStocks
 
             self.appendTransaction({
@@ -351,14 +383,14 @@ class Gamestate:
         if leftPlayerIndex==0:
             self.adminId+=1
 # obj = Gamestate(["bhavik","arun","arpit"],1)
-
 # obj.startMegaRound()
-# obj.buy(obj.playerOrder[obj.currentTurn],1,5000)
+# print(obj.playerOrder)
 # obj.passTransaction(obj.playerOrder[obj.currentTurn])
-# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.buy(obj.playerOrder[obj.currentTurn],1,100000)
+# obj.buy(obj.playerOrder[obj.currentTurn],1,10000)
 
 # obj.passTransaction(obj.playerOrder[obj.currentTurn])
-# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.sell(obj.playerOrder[obj.currentTurn],1,1000)
 # obj.passTransaction(obj.playerOrder[obj.currentTurn])
 
 # obj.passTransaction(obj.playerOrder[obj.currentTurn])
