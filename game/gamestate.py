@@ -66,10 +66,10 @@ class Gamestate:
             self.endMegaRound()
 
     def distributeCardsTo(self):
-        shuffledCards = getShuffledCards()
-        Cards=getCardStack()
+        # shuffledCards = getShuffledCards()
+        Cards,CrystalCards=getCardStack()
         for i in range(self.noOfPlayers):
-            self.userState[i]["cardsHeld"] = Cards[6:12]
+            self.userState[i]["cardsHeld"] = Cards[6:12]+CrystalCards[:5]
             # shuffledCards= shuffledCards[10:]
             
     

@@ -45,21 +45,29 @@ class ChatConsumer(WebsocketConsumer):
             if self.room_name in userDict:
                 userList=userDict[self.room_name]
                 if self.username in userList:
-                    raise UserAlreadyExistsError("User already exists")
+                    self.accept()
+                    self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":701,"message":"User with same username already present in this room"}}))
+                    self.disconnect()
                 if self.room_name in gameDict:
                     for i in gameDict[self.room_name].userState:
                         if gameDict[self.room_name].userState[i]["username"]==self.username:
                             userList.insert(i,self.username)
                             flag=1
                     if flag==0:
-                        raise GameAlreadyStartedError("Game Already Started")
+                        self.accept()
+                        self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":702,"message":"Game has already started"}}))
+                        self.disconnect()
                 else:
                     userList.append(self.username)
                 if len(userList)>7:
-                    raise RoomLimitExceededError("Room limit exceeded")
+                    self.accept()
+                    self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":703,"message":"Room is full"}}))
+                    self.disconnect()
                 userDict[self.room_name]=userList
             else:
-                raise RoomNotFoundError("Room not found")
+                self.accept()
+                self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":704,"message":"Room trying to join does not exist"}}))
+                self.disconnect()
                 
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
@@ -84,6 +92,10 @@ class ChatConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
             self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
             )
+            async_to_sync(self.channel_layer.group_discard)(
+                self.room_name, self.channel_name
+            )
+        else:
             async_to_sync(self.channel_layer.group_discard)(
                 self.room_name, self.channel_name
             )
@@ -174,11 +186,12 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(event))
 
     def rejoin(self):
-        pass
-        # response={"type":"RejoinMessage"}
-        # gameState=gameDict[self.room_name].toJSON()
-        # gameState=json.loads(gameState)
-        # response["data"]=
+        response={"type":"RejoinMessage"}
+        gameState=gameDict[self.room_name].toJSON()
+        gameState=json.loads(gameState)
+        response["data"]=gameState
+        self.send(text_data=json.dumps(response))
+
 
 
 

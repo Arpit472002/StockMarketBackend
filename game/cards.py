@@ -66,7 +66,7 @@ def getCardStack():
             'id': id
         })
         id += 1
-    return Cards
+    return Cards,CrystalCards
 
 
 def getShuffledCards(rounds=2):
