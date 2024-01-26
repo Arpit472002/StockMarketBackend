@@ -47,7 +47,7 @@ class ChatConsumer(WebsocketConsumer):
                 if self.username in userList:
                     self.accept()
                     self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":701,"message":"User with same username already present in this room"}}))
-                    self.disconnect()
+                    self.disconnect(same_name=True)
                 if self.room_name in gameDict:
                     for i in gameDict[self.room_name].userState:
                         if gameDict[self.room_name].userState[i]["username"]==self.username:
@@ -83,9 +83,9 @@ class ChatConsumer(WebsocketConsumer):
 
 
 
-    def disconnect(self, close_code=1000):
+    def disconnect(self, close_code=1000, same_name=False):
         # Leave room group
-        if self.username in userDict[self.room_name]:
+        if self.username in userDict[self.room_name] and not same_name:
             if self.room_name in gameDict:
                 gameDict[self.room_name].checkIsAdmin(userDict[self.room_name].index(self.username))
             userDict[self.room_name].remove(self.username)
