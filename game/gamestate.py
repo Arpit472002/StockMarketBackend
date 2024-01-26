@@ -1,5 +1,5 @@
 from .companies import Companies
-from .cards import getShuffledCards
+from .cards import getShuffledCards,getCardStack
 import random
 import math
 import pprint
@@ -67,9 +67,11 @@ class Gamestate:
 
     def distributeCardsTo(self):
         shuffledCards = getShuffledCards()
+        Cards=getCardStack()
         for i in range(self.noOfPlayers):
-            self.userState[i]["cardsHeld"] = shuffledCards[:10]
-            shuffledCards= shuffledCards[10:]
+            self.userState[i]["cardsHeld"] = Cards[6:12]
+            # shuffledCards= shuffledCards[10:]
+            
     
     def startMegaRound(self):
         random.shuffle(self.playerOrder)

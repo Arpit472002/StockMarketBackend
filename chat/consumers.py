@@ -34,6 +34,7 @@ class ChatConsumer(WebsocketConsumer):
         self.create = self.stringToBool(self.create[7:])
         self.join = self.stringToBool(self.join[5:])
         self.username = self.username[9:]
+        flag=0
         if self.create:
             if self.room_name in userDict:
                 raise Exception("Room with this name is already created...Try joining it!")
@@ -46,10 +47,8 @@ class ChatConsumer(WebsocketConsumer):
                 if self.username in userList:
                     raise UserAlreadyExistsError("User already exists")
                 if self.room_name in gameDict:
-                    flag=0
                     for i in gameDict[self.room_name].userState:
                         if gameDict[self.room_name].userState[i]["username"]==self.username:
-                            print(gameDict[self.room_name].userState[i]["username"])
                             userList.insert(i,self.username)
                             flag=1
                     if flag==0:
@@ -70,6 +69,9 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             self.room_name, {"type": "getRoomDetails", "data": {"room_name":self.room_name,"userArr":userDict[self.room_name],"room_status":True}}
         )
+        if flag==1:
+            self.rejoin()
+            
 
 
 
@@ -170,4 +172,13 @@ class ChatConsumer(WebsocketConsumer):
     def getRoomDetails(self, event):
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
+
+    def rejoin(self):
+        pass
+        # response={"type":"RejoinMessage"}
+        # gameState=gameDict[self.room_name].toJSON()
+        # gameState=json.loads(gameState)
+        # response["data"]=
+
+
 
