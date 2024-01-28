@@ -59,10 +59,10 @@ class ChatConsumer(WebsocketConsumer):
                         self.disconnect()
                 else:
                     userList.append(self.username)
-                if len(userList)>7:
-                    self.accept()
-                    self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":703,"message":"Room is full"}}))
-                    self.disconnect()
+                # if len(userList)>7:
+                #     self.accept()
+                #     self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":703,"message":"Room is full"}}))
+                #     self.disconnect()
                 userDict[self.room_name]=userList
             else:
                 self.accept()
