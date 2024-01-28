@@ -330,7 +330,7 @@ class Gamestate:
             self.userState[userId]["holdings"][companyId] += numberOfHoldings
             self.companyValues[companyId]["stocksAvailable"]-=numberOfHoldings
             self.userState[userId]["cashInHand"]-=transactionAmount
-            self.userState[userId]["cashInStocks"]+=transactionAmount
+            self.userState[userId]["cashInStocks"]+=numberOfHoldings*self.companyValues[companyId]["companyShareValue"]
 
             self.appendTransaction({
                 "userId":userId,
