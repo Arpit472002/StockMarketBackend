@@ -379,9 +379,16 @@ class Gamestate:
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
-    def checkIsAdmin(self,leftPlayerIndex):
-        if leftPlayerIndex==0:
-            self.adminId+=1
+    def checkIsAdmin(self,leftPlayerUsername,playersList):
+        for i in self.userState:
+            if self.userState[i]["username"]==leftPlayerUsername:
+                if self.adminId==i:
+                    self.adminId+=1
+                    while self.userState[self.adminId]["username"] not in playersList:
+                        self.adminId=(self.adminId+1)%self.noOfPlayers
+
+
+        
 # obj = Gamestate(["bhavik","arun","arpit"],1)
 # obj.startMegaRound()
 # print(obj.playerOrder)
