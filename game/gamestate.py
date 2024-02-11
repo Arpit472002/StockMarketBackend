@@ -231,6 +231,11 @@ class Gamestate:
             "circuitValue": denomination
 
         })
+        for i in self.userState[self.playerOrder[self.currentTurn]]["cardsHeld"]:
+            if i["type"]=="CIRCUIT":
+                if i["circuitType"]==circuitType and i["denomination"]==denomination:
+                    self.userState[self.playerOrder[self.currentTurn]]["cardsHeld"].remove(i)
+                    break
         self.nextTurn()
 
     def passTransaction(self,userId):
@@ -380,6 +385,8 @@ class Gamestate:
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
     def checkIsAdmin(self,leftPlayerUsername,playersList):
+        if len(playersList)==1:
+            return
         for i in self.userState:
             if self.userState[i]["username"]==leftPlayerUsername:
                 if self.adminId==i:

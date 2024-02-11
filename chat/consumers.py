@@ -39,7 +39,7 @@ class ChatConsumer(WebsocketConsumer):
             if self.room_name in userDict:
                 self.accept()
                 self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":700,"message":"Room with this id is already created"}}))
-                self.close(close_code=2000)
+                self.close(code=3000)
                 return
             userList=[self.username]
             userDict[self.room_name]=userList
@@ -57,7 +57,7 @@ class ChatConsumer(WebsocketConsumer):
                         if flag==0:
                             self.accept()
                             self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":702,"message":"Game has already started"}}))
-                            self.close(close_code=2000)
+                            self.close(code=3000)
                             return
                     else:
                         userList.append(self.username)
@@ -65,12 +65,12 @@ class ChatConsumer(WebsocketConsumer):
                 else: 
                     self.accept()
                     self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":701,"message":"User with same username already present in this room"}}))
-                    self.close(close_code=2000)
+                    self.close(code=3000)
                     return
             else:
                 self.accept()
                 self.send(json.dumps({"type":"ErrorMessage","data":{"errorCode":704,"message":"Room trying to join does not exist"}}))
-                self.close(close_code=2000)
+                self.close(code=3000)
                 return
                 
         # Join room group
@@ -87,7 +87,7 @@ class ChatConsumer(WebsocketConsumer):
 
 
     def disconnect(self,close_code=1000):
-        if close_code==2000:
+        if close_code==3000:
             async_to_sync(self.channel_layer.group_discard)(
                 self.room_name, self.channel_name
             )
@@ -100,24 +100,14 @@ class ChatConsumer(WebsocketConsumer):
                     async_to_sync(self.channel_layer.group_send)(
                     self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
                     )
+                    if len(userDict[self.room_name])==0:
+                        userDict.pop(self.room_name)
+                        if self.room_name in gameDict:
+                            gameDict.pop(self.room_name)
                     async_to_sync(self.channel_layer.group_discard)(
                     self.room_name, self.channel_name
                     )
-    # def disconnect(self, close_code=1000):
-    #     # Leave room group
-    #     if self.room_name in userDict:
-    #         if self.username in userDict[self.room_name]:
-    #             if self.room_name in gameDict:
-    #                 if close_code==1000:
-    #                     gameDict[self.room_name].checkIsAdmin(userDict[self.room_name].index(self.username))
-    #             userDict[self.room_name].remove(self.username)
-    #             async_to_sync(self.channel_layer.group_send)(
-    #             self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
-    #             )
-    #     async_to_sync(self.channel_layer.group_discard)(
-    #         self.room_name, self.channel_name
-    #     )
-            
+                              
     # Called when message is received from frontend
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
