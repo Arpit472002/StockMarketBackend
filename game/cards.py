@@ -71,13 +71,8 @@ def getCardStack():
 
 def getShuffledCards(rounds=2):
     cards = getCardStack()
-    length = len(cards)
-    for j in range(rounds):
-        for i in range(length):
-            randomIndex = random.randint(0, length-1)
-            temp = cards[i]
-            cards[i] = cards[randomIndex]
-            cards[randomIndex] = temp
+    random.shuffle(cards)
+    random.shuffle(cards)
     return cards
 
 
