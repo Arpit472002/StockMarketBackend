@@ -71,8 +71,8 @@ def getCardStack():
 
 def getShuffledCards(rounds=2):
     cards = getCardStack()
-    # random.shuffle(cards)
-    # random.shuffle(cards)
+    random.shuffle(cards)
+    random.shuffle(cards)
     return cards
 
 

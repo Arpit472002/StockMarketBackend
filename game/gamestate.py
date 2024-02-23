@@ -70,8 +70,8 @@ class Gamestate:
     def distributeCardsTo(self):
         shuffledCards = getShuffledCards()
         for i in range(self.noOfPlayers):
-            self.userState[i]["cardsHeld"] = shuffledCards[-10:]
-            # shuffledCards= shuffledCards[10:]
+            self.userState[i]["cardsHeld"] = shuffledCards[:10]
+            shuffledCards= shuffledCards[10:]
             
     
     def startMegaRound(self):
