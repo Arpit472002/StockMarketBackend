@@ -271,6 +271,8 @@ class Gamestate:
         if transaction["type"]=="SELL":
             if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
                 self.chairman[transaction["companyId"]] = None
+                if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000:
+                    self.director[transaction["companyId"]].append(transaction["userId"])
                 for idx in range(self.noOfPlayers):
                     if self.userState[idx]["holdings"][transaction["companyId"]]>=100000:
                         self.chairman[transaction["companyId"]] = idx       
@@ -402,19 +404,26 @@ class Gamestate:
         pprint.pprint(
             (
             self.companyValues,
-            self.priceBook,
-            self.userState,
-            self.currentMegaRound,
-            self.currentSubRound,
-            self.totalMegaRounds,
-            self.noOfPlayers,
-            self.currentTurn,
+            # self.priceBook,
+            # self.userState,
+            # self.currentMegaRound,
+            # self.currentSubRound,
+            # self.totalMegaRounds,
+            # self.noOfPlayers,
+            # self.currentTurn,
             self.playerOrder,
-            self.circuitValues,
-            self.transactions,
+            # self.circuitValues,
+            # self.transactions,
             self.chairman,
             self.director)
         )
+        print("Cards Here")
+        for i in list(self.userState.values()):
+            pprint.pprint(i["id"])
+            for card in i["cardsHeld"]:
+                if card["type"]=="NORMAL" and card["companyId"]==1:
+                    pprint.pprint(card)
+
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
@@ -431,23 +440,25 @@ class Gamestate:
 
 
         
-obj = Gamestate(["bhavik","arun","arpit"],1)
-obj.startMegaRound()
-print(obj.playerOrder)
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
-obj.buy(obj.playerOrder[obj.currentTurn],1,55000)
-obj.buy(obj.playerOrder[obj.currentTurn],1,10000)
+# obj = Gamestate(["bhavik","arun","arpit"],1)
+# obj.startMegaRound()
+# print(obj.playerOrder)
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.buy(obj.playerOrder[obj.currentTurn],1,50000)
+# obj.buy(obj.playerOrder[obj.currentTurn],1,100000)
 
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
-obj.sell(obj.playerOrder[obj.currentTurn],1,1000)
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# # obj.sell(obj.playerOrder[obj.currentTurn],1,4000)
+# # obj.sell(obj.playerOrder[obj.currentTurn],1,2000)
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
 
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
-obj.crystal(obj.playerOrder[obj.currentTurn],"LOAN_ON_STOCK",1,1000)
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.buy(obj.playerOrder[obj.currentTurn],1,50000)
+# obj.crystal(obj.playerOrder[obj.currentTurn],"LOAN_ON_STOCK",1,1000)
+# obj.sell(obj.playerOrder[obj.currentTurn],1,2000)
 
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
-obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
+# obj.passTransaction(obj.playerOrder[obj.currentTurn])
 
-obj.printDetails()
+# obj.printDetails()
