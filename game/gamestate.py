@@ -239,6 +239,8 @@ class Gamestate:
         self.nextTurn()
 
     def passTransaction(self,userId):
+        if userId!=self.playerOrder[self.currentTurn]:
+            return
         self.appendTransaction({
             "userId":userId,
             "type":"PASS",
@@ -269,6 +271,8 @@ class Gamestate:
             self.transactions.pop()
 
     def crystal(self,userId, crystalType,companyId=1,numberOfStocks=0):
+        if userId!=self.playerOrder[self.currentTurn]:
+            return
         if crystalType=="FRAUD":
             companyShareValue=self.companyValues[companyId]["companyShareValue"]
             newStockValue = math.floor(int(0.7 * companyShareValue)/5)*5
