@@ -135,8 +135,8 @@ class Gamestate:
         totalChangeInCompany = [0 for _ in range(7)]
         for i in Companies:
             self.netChangeInCompanyByUsers[i["id"]]=[0 for _ in range(self.noOfPlayers)]
-        # self.applyDirector()
-        # self.applyChairman()
+        self.applyDirector()
+        self.applyChairman()
         for i in range(self.noOfPlayers):
             for card in self.userState[i]["cardsHeld"]:
                 if card["type"] == "NORMAL":
