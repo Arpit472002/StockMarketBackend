@@ -43,7 +43,7 @@ class Gamestate:
             self.userState[i] = {
                 "id":i,
                 "username":playersName[i],
-                "cashInHand": 8000000,
+                "cashInHand": 800000,
                 "cashInStocks":0,
                 "holdings": {},
                 "cardsHeld": [],
@@ -427,6 +427,13 @@ class Gamestate:
                     break
         self.nextTurn()
     
+    def kickUser(self,userId):
+        user=None
+        for i in self.userState:
+            if self.userState[i]["userId"]==userId:
+                user=i
+        self.userState.pop(user)
+
     def printDetails(self):
         pprint.pprint(
             (
@@ -454,6 +461,7 @@ class Gamestate:
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
+
     def checkIsAdmin(self,leftPlayerUsername,playersList):
         if len(playersList)==0:
             return 0
