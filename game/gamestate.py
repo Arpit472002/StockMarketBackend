@@ -4,9 +4,9 @@ import random
 import math
 import pprint
 import json
-
+#configs={"excludeCrystalCards":True,"cashInHand":850000,"totalStocks":250000,"limitTransactionStocks":True,"addChairman":True,"addDirector":False}
 class Gamestate:
-    def __init__(self,playersName, totalMegaRounds = 10):
+    def __init__(self,playersName, totalMegaRounds = 10, configs={}):
         noOfPlayers = len(playersName)
         self.companyValues = {}
         self.priceBook = {}
@@ -23,12 +23,15 @@ class Gamestate:
         self.adminId=0
         self.chairman={}
         self.director={}
+        self.configs=configs
 
         for i in Companies:
             self.chairman[i["id"]]=None
             self.director[i["id"]]=[]
             self.companyValues[i["id"]]={"companyShareValue":i["startingPrice"],
                                       "stocksAvailable":200000}
+            if "totalStocks" in self.configs:
+                self.companyValues[i["id"]]["stocksAvailable"]=self.configs["totalStocks"]
             self.priceBook[i["id"]]=[i["startingPrice"]]
             self.circuitValues[i["id"]] = {
                 "UP":None,
@@ -45,6 +48,8 @@ class Gamestate:
                 "holdings": {},
                 "cardsHeld": [],
             }
+            if "cashInHand" in self.configs:
+                self.userState[i]["cashInHand"]=self.configs["cashInHand"]
             for j in Companies:
                 self.userState[i]["holdings"][j["id"]] = 0
     
@@ -70,7 +75,13 @@ class Gamestate:
             self.endMegaRound()
 
     def distributeCardsTo(self):
-        shuffledCards = getShuffledCards()
+        if "excludeCrystalCards" in self.configs:
+            if self.configs["excludeCrystalCards"]:
+                shuffledCards = getShuffledCards(excludeCrystal=True)
+            else:
+                shuffledCards = getShuffledCards()
+        else:
+            shuffledCards = getShuffledCards()
         for i in range(self.noOfPlayers):
             self.userState[i]["cardsHeld"] = shuffledCards[:10]
             shuffledCards= shuffledCards[10:]
@@ -135,8 +146,12 @@ class Gamestate:
         totalChangeInCompany = [0 for _ in range(7)]
         for i in Companies:
             self.netChangeInCompanyByUsers[i["id"]]=[0 for _ in range(self.noOfPlayers)]
-        # self.applyDirector()
-        # self.applyChairman()
+        if "addDirector" in self.configs:
+            if self.configs["addDirector"]:
+                self.applyDirector()
+        if "addChairman" in self.configs:
+            if self.configs["addChairman"]:
+                self.applyChairman()
         for i in range(self.noOfPlayers):
             for card in self.userState[i]["cardsHeld"]:
                 if card["type"] == "NORMAL":
@@ -181,6 +196,10 @@ class Gamestate:
             numberOfStocks=math.floor(cashInHand/(companyShareValue*1000))*1000
         if companyShareValue==0:
             numberOfStocks=0
+        if "limitTransactionStocks" in self.configs:
+            if self.configs["limitTransactionStocks"]:
+                if numberOfStocks>100000:
+                    numberOfStocks=100000
         return numberOfStocks
 
     def buy(self,userId,companyId,numberOfStocks):
@@ -210,6 +229,10 @@ class Gamestate:
             numberOfStocks=stocks_held
         if companyShareValue==0:
             numberOfStocks=0
+        if "limitTransactionStocks" in self.configs:
+            if self.configs["limitTransactionStocks"]:
+                if numberOfStocks>100000:
+                    numberOfStocks=100000
         return numberOfStocks
 
     def sell(self,userId,companyId,numberOfStocks):
@@ -268,32 +291,36 @@ class Gamestate:
 
     def appendTransaction(self,transaction):
         # Chairman Change Logic
-        if transaction["type"]=="SELL":
-            if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
-                self.chairman[transaction["companyId"]] = None
-                if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000:
-                    self.director[transaction["companyId"]].append(transaction["userId"])
-                for idx in range(self.noOfPlayers):
-                    if self.userState[idx]["holdings"][transaction["companyId"]]>=100000:
-                        self.chairman[transaction["companyId"]] = idx       
+        if "addChairman" in self.configs:
+            if self.configs["addChairman"]:
+                if transaction["type"]=="SELL":
+                    if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
+                        self.chairman[transaction["companyId"]] = None
+                        if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000:
+                            self.director[transaction["companyId"]].append(transaction["userId"])
+                        for idx in range(self.noOfPlayers):
+                            if self.userState[idx]["holdings"][transaction["companyId"]]>=100000:
+                                self.chairman[transaction["companyId"]] = idx       
 
-        elif transaction["companyId"]>0:
-            if self.chairman[transaction["companyId"]]==None and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=100000:
-                self.chairman[transaction["companyId"]] = transaction["userId"]
+                elif transaction["companyId"]>0:
+                    if self.chairman[transaction["companyId"]]==None and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=100000:
+                        self.chairman[transaction["companyId"]] = transaction["userId"]
         
         #Director Change Logic
-        if transaction["type"]=="SELL":
-            if transaction["userId"] in self.director[transaction["companyId"]] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<50000:
-                self.director[transaction["companyId"]].remove(transaction["userId"])
-                for idx in range(self.noOfPlayers):
-                    if len(self.director[transaction["companyId"]])==2:
-                        break
-                    if self.userState[idx]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=idx:
-                        self.director[transaction["companyId"]].append(transaction["userId"])  
+        if "addDirector" in self.configs:
+            if self.configs["addDirector"]:
+                if transaction["type"]=="SELL":
+                    if transaction["userId"] in self.director[transaction["companyId"]] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<50000:
+                        self.director[transaction["companyId"]].remove(transaction["userId"])
+                        for idx in range(self.noOfPlayers):
+                            if len(self.director[transaction["companyId"]])==2:
+                                break
+                            if self.userState[idx]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=idx:
+                                self.director[transaction["companyId"]].append(transaction["userId"])  
 
-        elif transaction["companyId"]>0:
-            if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=transaction["userId"] and transaction["userId"] not in self.director[transaction["companyId"]]:
-                self.director[transaction["companyId"]].append(transaction["userId"])
+                elif transaction["companyId"]>0:
+                    if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=transaction["userId"] and transaction["userId"] not in self.director[transaction["companyId"]]:
+                        self.director[transaction["companyId"]].append(transaction["userId"])
 
         # Transaction Logic
         self.transactions.insert(0,transaction)

@@ -111,8 +111,7 @@ class ChatConsumer(WebsocketConsumer):
                             gameDict.pop(self.room_name)
                     async_to_sync(self.channel_layer.group_discard)(
                     self.room_name, self.channel_name
-                    )
-                              
+                    )                  
     # Called when message is received from frontend
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -120,7 +119,10 @@ class ChatConsumer(WebsocketConsumer):
         type=text_data_json["type"]
         if type=="onStartGame":
             if userDict[self.room_name][0]==self.username:
-                gameState=Gamestate(userDict[self.room_name],message["totalMegaRounds"])
+                if "configs" in message:
+                    gameState=Gamestate(userDict[self.room_name],message["totalMegaRounds"],message["configs"])
+                else:
+                    gameState=Gamestate(userDict[self.room_name],message["totalMegaRounds"])
                 gameState.startMegaRound()
                 gameDict[self.room_name]=gameState
                 async_to_sync(self.channel_layer.group_send)(

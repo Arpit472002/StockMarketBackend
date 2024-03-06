@@ -69,8 +69,10 @@ def getCardStack():
     return Cards
 
 
-def getShuffledCards(rounds=2):
+def getShuffledCards(rounds=2,excludeCrystal=False):
     cards = getCardStack()
+    if excludeCrystal:
+        cards=cards[:116]+cards[126:]
     random.shuffle(cards)
     random.shuffle(cards)
     return cards
