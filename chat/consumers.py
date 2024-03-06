@@ -177,6 +177,13 @@ class ChatConsumer(WebsocketConsumer):
                 self.room_name,{"type":"endGame","data":{"results":response}}
             )
             gameDict.pop(self.room_name)
+        elif type=="emoticon":
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,{"type":"emoticon","data":message}
+            )
+
+    def emoticon(self,event):
+        self.send(text_data=json.dumps(event))
 
     def onStartGame(self,event):
         response={"type":"onStartGame"}
