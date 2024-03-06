@@ -428,12 +428,11 @@ class Gamestate:
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=False, indent=4)
     def checkIsAdmin(self,leftPlayerUsername,playersList):
-        if len(playersList)==1:
+        if len(playersList)==0:
             return 0
         for i in self.userState:
             if self.userState[i]["username"]==leftPlayerUsername:
                 if self.adminId==i:
-                    self.adminId+=1
                     while self.userState[self.adminId]["username"] not in playersList:
                         self.adminId=(self.adminId+1)%self.noOfPlayers
                     return 1

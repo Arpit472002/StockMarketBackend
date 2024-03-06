@@ -94,9 +94,14 @@ class ChatConsumer(WebsocketConsumer):
         else:
             if self.room_name in userDict:
                 if self.username in userDict[self.room_name]:
-                    if self.room_name in gameDict:
-                        gameDict[self.room_name].checkIsAdmin(self.username,userDict[self.room_name])
                     userDict[self.room_name].remove(self.username)
+                    if self.room_name in gameDict:
+                        result=gameDict[self.room_name].checkIsAdmin(self.username,userDict[self.room_name])
+                    if self.room_name in gameDict:
+                        if result:
+                            async_to_sync(self.channel_layer.group_send)(
+                            self.room_name, {"type": "adminChanged", "data":gameDict[self.room_name]}
+                            )
                     async_to_sync(self.channel_layer.group_send)(
                     self.room_name, {"type": "getRoomDetails", "data":{"message":"Someone Left","userArr":userDict[self.room_name]}}
                     )
@@ -192,7 +197,6 @@ class ChatConsumer(WebsocketConsumer):
     def getRoomDetails(self, event):
         # Send message to WebSocket
         self.send(text_data=json.dumps(event))
-
     def rejoin(self):
         response={"type":"RejoinMessage"}
         gameState=gameDict[self.room_name].toJSON()
@@ -200,6 +204,10 @@ class ChatConsumer(WebsocketConsumer):
         response["data"]=gameState
         self.send(text_data=json.dumps(response))
 
-
-
+    def adminChanged(self,event):
+        response={"type":"adminChanged"}
+        event=event["data"].toJSON()
+        event=json.loads(event)
+        response["data"]=event
+        self.send(text_data=json.dumps(response))
 
