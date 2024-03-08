@@ -30,8 +30,8 @@ class Gamestate:
             self.director[i["id"]]=[]
             self.companyValues[i["id"]]={"companyShareValue":i["startingPrice"],
                                       "stocksAvailable":200000}
-            if "totalStocks" in self.configs:
-                self.companyValues[i["id"]]["stocksAvailable"]=self.configs["totalStocks"]
+            if "totalStock" in self.configs:
+                self.companyValues[i["id"]]["stocksAvailable"]=self.configs["totalStock"]
             self.priceBook[i["id"]]=[i["startingPrice"]]
             self.circuitValues[i["id"]] = {
                 "UP":None,
@@ -48,8 +48,8 @@ class Gamestate:
                 "holdings": {},
                 "cardsHeld": [],
             }
-            if "cashInHand" in self.configs:
-                self.userState[i]["cashInHand"]=self.configs["cashInHand"]
+            if "initialCashInHand" in self.configs:
+                self.userState[i]["cashInHand"]=self.configs["initialCashInHand"]
             for j in Companies:
                 self.userState[i]["holdings"][j["id"]] = 0
     
@@ -146,11 +146,11 @@ class Gamestate:
         totalChangeInCompany = [0 for _ in range(7)]
         for i in Companies:
             self.netChangeInCompanyByUsers[i["id"]]=[0 for _ in range(self.noOfPlayers)]
-        if "addDirector" in self.configs:
-            if self.configs["addDirector"]:
+        if "allowDirector" in self.configs:
+            if self.configs["allowDirector"]:
                 self.applyDirector()
-        if "addChairman" in self.configs:
-            if self.configs["addChairman"]:
+        if "allowChairman" in self.configs:
+            if self.configs["allowChairman"]:
                 self.applyChairman()
         for i in range(self.noOfPlayers):
             for card in self.userState[i]["cardsHeld"]:
@@ -196,8 +196,8 @@ class Gamestate:
             numberOfStocks=math.floor(cashInHand/(companyShareValue*1000))*1000
         if companyShareValue==0:
             numberOfStocks=0
-        if "limitTransactionStocks" in self.configs:
-            if self.configs["limitTransactionStocks"]:
+        if "limitTransactionValue" in self.configs:
+            if self.configs["limitTransactionValue"]:
                 if numberOfStocks>100000:
                     numberOfStocks=100000
         return numberOfStocks
@@ -229,8 +229,8 @@ class Gamestate:
             numberOfStocks=stocks_held
         if companyShareValue==0:
             numberOfStocks=0
-        if "limitTransactionStocks" in self.configs:
-            if self.configs["limitTransactionStocks"]:
+        if "limitTransactionValue" in self.configs:
+            if self.configs["limitTransactionValue"]:
                 if numberOfStocks>100000:
                     numberOfStocks=100000
         return numberOfStocks
@@ -291,8 +291,8 @@ class Gamestate:
 
     def appendTransaction(self,transaction):
         # Chairman Change Logic
-        if "addChairman" in self.configs:
-            if self.configs["addChairman"]:
+        if "allowChairman" in self.configs:
+            if self.configs["allowChairman"]:
                 if transaction["type"]=="SELL":
                     if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
                         self.chairman[transaction["companyId"]] = None
@@ -307,8 +307,8 @@ class Gamestate:
                         self.chairman[transaction["companyId"]] = transaction["userId"]
         
         #Director Change Logic
-        if "addDirector" in self.configs:
-            if self.configs["addDirector"]:
+        if "allowDirector" in self.configs:
+            if self.configs["allowDirector"]:
                 if transaction["type"]=="SELL":
                     if transaction["userId"] in self.director[transaction["companyId"]] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<50000:
                         self.director[transaction["companyId"]].remove(transaction["userId"])
@@ -430,33 +430,44 @@ class Gamestate:
     def kickUser(self,userId):
         user=None
         for i in self.userState:
-            if self.userState[i]["userId"]==userId:
-                user=i
-        self.userState.pop(user)
+            print(i,userId)
+            if i==userId:
+                user=self.userState[i]
+                print(user)
+                if self.playerOrder[self.currentTurn]==userId:
+                    self.currentTurn=(self.currentTurn+1)%self.noOfPlayers
+                break
+
+        for j in self.companyValues:
+            print(user["holdings"][j])
+            self.companyValues[j]["stocksAvailable"]+=user["holdings"][j]
+        self.userState.pop(i)
+        self.playerOrder.pop(i)
+        self.noOfPlayers-=1
 
     def printDetails(self):
         pprint.pprint(
             (
             self.companyValues,
-            # self.priceBook,
-            # self.userState,
-            # self.currentMegaRound,
-            # self.currentSubRound,
-            # self.totalMegaRounds,
-            # self.noOfPlayers,
-            # self.currentTurn,
+            self.priceBook,
+            self.userState,
+            self.currentMegaRound,
+            self.currentSubRound,
+            self.totalMegaRounds,
+            self.noOfPlayers,
+            self.currentTurn,
             self.playerOrder,
-            # self.circuitValues,
-            # self.transactions,
+            self.circuitValues,
+            self.transactions,
             self.chairman,
             self.director)
         )
-        print("Cards Here")
-        for i in list(self.userState.values()):
-            pprint.pprint(i["id"])
-            for card in i["cardsHeld"]:
-                if card["type"]=="NORMAL" and card["companyId"]==1:
-                    pprint.pprint(card)
+        # print("Cards Here")
+        # for i in list(self.userState.values()):
+        #     pprint.pprint(i["id"])
+        #     for card in i["cardsHeld"]:
+        #         if card["type"]=="NORMAL" and card["companyId"]==1:
+        #             pprint.pprint(card)
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
