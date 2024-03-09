@@ -485,6 +485,7 @@ class Gamestate:
         if index!=self.noOfPlayers-1 and flag:
             self.currentTurn-=1
         self.noOfPlayers-=1
+        return user
 
     def printDetails(self):
         pprint.pprint(

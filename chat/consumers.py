@@ -182,10 +182,21 @@ class ChatConsumer(WebsocketConsumer):
                 self.room_name,{"type":"emoticon","data":{"emoji":message,"username":self.username}}
             )
         elif type=="kickUser":
-            gameDict[self.room_name].kickUser(message)
+            user=gameDict[self.room_name].kickUser(message)
             async_to_sync(self.channel_layer.group_send)(
-                self.room_name,{"type":"emoticon","data":{"emoji":message,"username":self.username}}
+                self.room_name,{"type":"kickUser","data":{"username":user["username"],"gameState":gameDict[self.room_name]}}
             )
+
+    def kickUser(self,event):
+        print(event)
+        gameState=event["data"]["gameState"].toJSON()
+        event["data"]["gameState"]=json.loads(gameState)
+        self.send(text_data=json.dumps(event))
+        # response={"type":"kickUser"}
+        # response["data"]["username"]=event["username"]
+        # gameState=event["gameState"]
+
+
 
     def emoticon(self,event):
         self.send(text_data=json.dumps(event))
