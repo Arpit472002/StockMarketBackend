@@ -322,7 +322,7 @@ class Gamestate:
         for idx in range(self.noOfPlayers):
             if len(self.director[companyId])==2:
                 break
-            if self.userState[idx]["holdings"][companyId]>=50000 and self.chairman[companyId]!=idx:
+            if self.userState[idx]["holdings"][companyId]>=50000 and self.chairman[companyId]!=idx and idx not in self.director:
                 self.director[companyId].append(idx) 
 
     def removeDirector(self,companyId):
