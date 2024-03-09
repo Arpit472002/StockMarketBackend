@@ -258,7 +258,8 @@ class Gamestate:
 
 
     def circuit(self,companyId, circuitType, denomination):
-        self.circuitValues[companyId][circuitType]=denomination
+        if self.circuitValues[companyId][circuitType]==None:
+            self.circuitValues[companyId][circuitType]=denomination
         self.appendTransaction({
             "userId":self.playerOrder[self.currentTurn],
             "type":"CIRCUIT:"+circuitType,
