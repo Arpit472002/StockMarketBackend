@@ -43,7 +43,7 @@ class Gamestate:
             self.userState[i] = {
                 "id":i,
                 "username":playersName[i],
-                "cashInHand": 800000,
+                "cashInHand": 8000000,
                 "cashInStocks":0,
                 "holdings": {},
                 "cardsHeld": [],
@@ -289,39 +289,76 @@ class Gamestate:
         })
         self.nextTurn()
 
+    def addChairman(self,companyId):
+        if "allowChairman" not in self.configs:
+            return
+        if not self.configs["allowChairman"]: 
+            return
+        if self.chairman[companyId]!=None:
+            return
+        for idx in range(self.noOfPlayers):
+            if self.userState[idx]["holdings"][companyId]>=100000:
+                self.chairman[companyId] = idx
+                break
+        
+    def removeChairman(self,companyId):
+        if "allowChairman" not in self.configs:
+            return
+        if not self.configs["allowChairman"]: 
+            return
+        if self.chairman[companyId]==None:
+            return
+        if self.userState[self.chairman[companyId]]["holdings"][companyId]<100000:
+            self.chairman[companyId]=None
+            self.addChairman(companyId)
+    
+    def addDirector(self,companyId):
+        if "allowDirector" not in self.configs:
+            return
+        if not self.configs["allowDirector"]: 
+            return
+        if len(self.director[companyId])==2:
+            return
+        for idx in range(self.noOfPlayers):
+            if len(self.director[companyId])==2:
+                break
+            if self.userState[idx]["holdings"][companyId]>=50000 and self.chairman[companyId]!=idx:
+                self.director[companyId].append(idx) 
+
+    def removeDirector(self,companyId):
+        if "allowDirector" not in self.configs:
+            return
+        if not self.configs["allowDirector"]: 
+            return
+        if len(self.director[companyId])==0:
+            return
+        for director in self.director[companyId]:
+            if "allowChairman" in self.configs:
+                if self.configs["allowChairman"]: 
+                    if director==self.chairman[companyId]:
+                        self.director[companyId].remove(director)
+                        continue
+            if self.userState[director]["holdings"][companyId]<50000:
+                self.director[companyId].remove(director)
+
+            
+        
+    
+
     def appendTransaction(self,transaction):
         # Chairman Change Logic
-        if "allowChairman" in self.configs:
-            if self.configs["allowChairman"]:
-                if transaction["type"]=="SELL":
-                    if self.chairman[transaction["companyId"]]==transaction["userId"] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<100000:
-                        self.chairman[transaction["companyId"]] = None
-                        if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000:
-                            self.director[transaction["companyId"]].append(transaction["userId"])
-                        for idx in range(self.noOfPlayers):
-                            if self.userState[idx]["holdings"][transaction["companyId"]]>=100000:
-                                self.chairman[transaction["companyId"]] = idx       
 
-                elif transaction["companyId"]>0:
-                    if self.chairman[transaction["companyId"]]==None and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=100000:
-                        self.chairman[transaction["companyId"]] = transaction["userId"]
+        if transaction["type"]=="SELL":
+            self.removeChairman(transaction["companyId"])
+            self.removeDirector(transaction["companyId"])  
+            self.addDirector(transaction["companyId"]) 
+
+        elif transaction["companyId"]>0:
+            self.addChairman(transaction["companyId"])
+            self.removeDirector(transaction["companyId"])
+            self.addDirector(transaction["companyId"])
+    
         
-        #Director Change Logic
-        if "allowDirector" in self.configs:
-            if self.configs["allowDirector"]:
-                if transaction["type"]=="SELL":
-                    if transaction["userId"] in self.director[transaction["companyId"]] and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]<50000:
-                        self.director[transaction["companyId"]].remove(transaction["userId"])
-                        for idx in range(self.noOfPlayers):
-                            if len(self.director[transaction["companyId"]])==2:
-                                break
-                            if self.userState[idx]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=idx:
-                                self.director[transaction["companyId"]].append(transaction["userId"])  
-
-                elif transaction["companyId"]>0:
-                    if len(self.director[transaction["companyId"]])<2 and self.userState[transaction["userId"]]["holdings"][transaction["companyId"]]>=50000 and self.chairman[transaction["companyId"]]!=transaction["userId"] and transaction["userId"] not in self.director[transaction["companyId"]]:
-                        self.director[transaction["companyId"]].append(transaction["userId"])
-
         # Transaction Logic
         self.transactions.insert(0,transaction)
         if len(self.transactions) > 35:
@@ -428,39 +465,44 @@ class Gamestate:
         self.nextTurn()
     
     def kickUser(self,userId):
-        user=None
-        for i in self.userState:
-            print(i,userId)
-            if i==userId:
-                user=self.userState[i]
-                print(user)
-                if self.playerOrder[self.currentTurn]==userId:
-                    self.currentTurn=(self.currentTurn+1)%self.noOfPlayers
-                break
-
-        for j in self.companyValues:
-            print(user["holdings"][j])
-            self.companyValues[j]["stocksAvailable"]+=user["holdings"][j]
-        self.userState.pop(i)
-        self.playerOrder.pop(i)
+        user=self.userState[userId]
+        for companyId in self.companyValues:
+            self.companyValues[companyId]["stocksAvailable"]+=user["holdings"][companyId]
+            self.userState[userId]["holdings"][companyId]=0
+            if userId==self.chairman[companyId]:
+                self.removeChairman(companyId)
+            if userId in self.director[companyId]:
+                self.removeDirector(companyId)
+                self.addDirector(companyId)
+        flag=0
+        if self.playerOrder[self.currentTurn]==userId:
+            self.nextTurn()
+            flag=1
+        index=self.playerOrder.index(userId)
+        self.playerOrder.remove(userId)
+        self.userState.pop(userId)
+        print(index,self.noOfPlayers)
+        if index!=self.noOfPlayers-1 and flag:
+            self.currentTurn-=1
         self.noOfPlayers-=1
 
     def printDetails(self):
         pprint.pprint(
             (
-            self.companyValues,
-            self.priceBook,
-            self.userState,
-            self.currentMegaRound,
-            self.currentSubRound,
-            self.totalMegaRounds,
-            self.noOfPlayers,
-            self.currentTurn,
-            self.playerOrder,
-            self.circuitValues,
-            self.transactions,
-            self.chairman,
-            self.director)
+            # self.companyValues,
+            # # self.priceBook,
+            # self.userState,
+            # self.currentMegaRound,
+            # self.currentSubRound,
+            # self.totalMegaRounds,
+            # self.noOfPlayers,
+            # self.currentTurn,
+            # self.playerOrder,
+            # self.circuitValues,
+            # self.transactions,
+            # self.chairman,
+            # self.director)
+        )
         )
         # print("Cards Here")
         # for i in list(self.userState.values()):
