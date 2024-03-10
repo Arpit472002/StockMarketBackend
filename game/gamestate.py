@@ -472,6 +472,7 @@ class Gamestate:
             self.userState[userId]["holdings"][companyId]=0
             if userId==self.chairman[companyId]:
                 self.removeChairman(companyId)
+                self.removeDirector(companyId)
             if userId in self.director[companyId]:
                 self.removeDirector(companyId)
                 self.addDirector(companyId)
