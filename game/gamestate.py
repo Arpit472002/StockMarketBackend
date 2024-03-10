@@ -476,6 +476,14 @@ class Gamestate:
             if userId in self.director[companyId]:
                 self.removeDirector(companyId)
                 self.addDirector(companyId)
+
+        # if self.playerOrder[self.currentTurn]==userId:
+        #     self.nextTurn()
+        # index=self.playerOrder.index(userId)
+        # self.playerOrder.remove(userId)
+        # self.userState.pop(userId)
+        
+        
         flag=0
         if self.playerOrder[self.currentTurn]==userId:
             self.nextTurn()
@@ -484,7 +492,7 @@ class Gamestate:
         self.playerOrder.remove(userId)
         self.userState.pop(userId)
         print(index,self.noOfPlayers)
-        if index!=self.noOfPlayers-1 and flag:
+        if index!=self.noOfPlayers-1 or flag:
             self.currentTurn-=1
         self.noOfPlayers-=1
         return user
