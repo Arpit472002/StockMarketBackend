@@ -476,26 +476,80 @@ class Gamestate:
             if userId in self.director[companyId]:
                 self.removeDirector(companyId)
                 self.addDirector(companyId)
+# #common
+# Player order se remove
+# userstate se remove
+# no of player decrement
 
+
+# case 1
+
+# 0 Admin
+# 1 <-
+# 2 X
+# 3
+# 4 
+# 5
+
+# case 2 
+
+# 0 Admin
+# 1
+# 2 <- X
+# 3
+# 4
+# 5
+
+# case 3
+
+# 0 Admin
+# 1
+# 2
+# 3
+# 4
+# 5 <- X
+
+
+# nextTurn()
+
+# case 4
+
+# 0 Admin
+# 1
+# 2
+# 3 X
+# 4
+# 5 <- 
+
+# currentTurn--
+        index=self.playerOrder.index(userId)
+        ##CASE 1
+        if index>self.currentTurn:
+            pass
+        elif index==self.currentTurn:
+            if index==self.noOfPlayers-1:
+                self.nextTurn()
+            else:
+                pass
+        else:
+            self.currentTurn-=1
+        self.playerOrder.remove(userId)
+        self.userState.pop(userId)
+        self.noOfPlayers-=1
+        return user
+        
+        # flag=0
         # if self.playerOrder[self.currentTurn]==userId:
         #     self.nextTurn()
+        #     flag=1
         # index=self.playerOrder.index(userId)
         # self.playerOrder.remove(userId)
         # self.userState.pop(userId)
-        
-        
-        flag=0
-        if self.playerOrder[self.currentTurn]==userId:
-            self.nextTurn()
-            flag=1
-        index=self.playerOrder.index(userId)
-        self.playerOrder.remove(userId)
-        self.userState.pop(userId)
-        print(index,self.noOfPlayers)
-        if index!=self.noOfPlayers-1 or flag:
-            self.currentTurn-=1
-        self.noOfPlayers-=1
-        return user
+        # print(index,self.noOfPlayers)
+        # if index!=self.noOfPlayers-1 or flag:
+        #     self.currentTurn-=1
+        # self.noOfPlayers-=1
+        # return user
 
     def printDetails(self):
         pprint.pprint(
